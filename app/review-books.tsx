@@ -8,12 +8,14 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
+  Linking,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Book, Child, Achievement } from '@/types/database';
-import { ArrowLeft, Check, X, BookOpen, Award } from 'lucide-react-native';
+import { ArrowLeft, Check, X, BookOpen, Award, MessageCircle } from 'lucide-react-native';
 
 interface BookWithChild extends Book {
   child?: Child;
@@ -163,6 +165,58 @@ export default function ReviewBooksScreen() {
     setModalVisible(true);
   };
 
+  const checkWithChatGPT = async (book: BookWithChild) => {
+    const prompt = `Please evaluate if this book summary written by a child is sufficient and demonstrates they actually read the book:
+
+Book Title: "${book.title}"
+Author: ${book.author}
+${book.reading_level ? `Reading Level: ${book.reading_level}` : ''}
+
+Child's Summary:
+"${book.summary}"
+
+Please assess:
+1. Does the summary show the child actually read the book?
+2. Does it demonstrate comprehension of the main ideas?
+3. Is it detailed enough for their reading level?
+4. Any red flags that suggest they didn't read it?
+
+Provide your assessment and recommendation.`;
+
+    if (Platform.OS === 'web') {
+      const textarea = document.createElement('textarea');
+      textarea.value = prompt;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      Alert.alert(
+        'Prompt Copied!',
+        'The verification prompt has been copied to your clipboard. Opening ChatGPT now - just paste it in!',
+        [
+          {
+            text: 'Open ChatGPT',
+            onPress: () => Linking.openURL('https://chat.openai.com'),
+          },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Check with ChatGPT',
+        'Copy this prompt and paste it into ChatGPT to verify the book summary:\n\n' + prompt,
+        [
+          {
+            text: 'Open ChatGPT',
+            onPress: () => Linking.openURL('https://chat.openai.com'),
+          },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -215,6 +269,14 @@ export default function ReviewBooksScreen() {
                   )}
                   <Text style={styles.bookChild}>Submitted by {book.child?.name}</Text>
                 </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.quickVerifyButton}
+                onPress={() => checkWithChatGPT(book)}
+              >
+                <MessageCircle size={14} color="#00A67E" />
+                <Text style={styles.quickVerifyText}>Quick Verify with ChatGPT</Text>
               </TouchableOpacity>
 
               <View style={styles.bookActions}>
@@ -272,6 +334,13 @@ export default function ReviewBooksScreen() {
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Summary</Text>
                 <Text style={styles.detailValue}>{selectedBook.summary}</Text>
+                <TouchableOpacity
+                  style={styles.chatGPTButton}
+                  onPress={() => checkWithChatGPT(selectedBook)}
+                >
+                  <MessageCircle size={16} color="#00A67E" />
+                  <Text style={styles.chatGPTButtonText}>Verify with ChatGPT</Text>
+                </TouchableOpacity>
               </View>
 
               {selectedBook.reading_level && (
@@ -422,6 +491,24 @@ const styles = StyleSheet.create({
     color: '#999',
     marginTop: 2,
   },
+  quickVerifyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E6F7F3',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#00A67E',
+  },
+  quickVerifyText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#00A67E',
+  },
   bookActions: {
     flexDirection: 'row',
     gap: 12,
@@ -481,6 +568,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     lineHeight: 24,
+  },
+  chatGPTButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E6F7F3',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#00A67E',
+  },
+  chatGPTButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#00A67E',
   },
   modalActions: {
     flexDirection: 'row',
