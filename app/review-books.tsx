@@ -134,30 +134,49 @@ export default function ReviewBooksScreen() {
   };
 
   const handleReject = (book: BookWithChild) => {
-    Alert.alert(
-      'Reject Book',
-      `Are you sure you want to reject "${book.title}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reject',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const { error } = await supabase
-                .from('books')
-                .update({ status: 'rejected' })
-                .eq('id', book.id);
-
-              if (error) throw error;
-              fetchPendingBooks();
-            } catch (error: any) {
-              Alert.alert('Error', error.message);
-            }
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Are you sure you want to reject "${book.title}"?`)) {
+        performReject(book);
+      }
+    } else {
+      Alert.alert(
+        'Reject Book',
+        `Are you sure you want to reject "${book.title}"?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Reject',
+            style: 'destructive',
+            onPress: () => performReject(book),
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
+  };
+
+  const performReject = async (book: BookWithChild) => {
+    try {
+      const { error } = await supabase
+        .from('books')
+        .update({ status: 'rejected' })
+        .eq('id', book.id);
+
+      if (error) throw error;
+
+      if (Platform.OS === 'web') {
+        window.alert(`"${book.title}" has been rejected.`);
+      } else {
+        Alert.alert('Success', `"${book.title}" has been rejected.`);
+      }
+
+      fetchPendingBooks();
+    } catch (error: any) {
+      if (Platform.OS === 'web') {
+        window.alert(`Error: ${error.message}`);
+      } else {
+        Alert.alert('Error', error.message);
+      }
+    }
   };
 
   const openBookDetails = (book: BookWithChild) => {
@@ -191,17 +210,9 @@ Provide your assessment and recommendation.`;
       document.execCommand('copy');
       document.body.removeChild(textarea);
 
-      Alert.alert(
-        'Prompt Copied!',
-        'The verification prompt has been copied to your clipboard. Opening ChatGPT now - just paste it in!',
-        [
-          {
-            text: 'Open ChatGPT',
-            onPress: () => Linking.openURL('https://chat.openai.com'),
-          },
-          { text: 'Cancel', style: 'cancel' },
-        ]
-      );
+      if (window.confirm('The verification prompt has been copied to your clipboard. Opening ChatGPT now - just paste it in!\n\nClick OK to open ChatGPT.')) {
+        window.open('https://chat.openai.com', '_blank');
+      }
     } else {
       Alert.alert(
         'Check with ChatGPT',
