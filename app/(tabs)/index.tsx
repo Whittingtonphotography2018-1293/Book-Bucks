@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { ChildWithStats } from '@/types/database';
-import { BookOpen, TrendingUp, Clock, Award } from 'lucide-react-native';
+import { BookOpen, TrendingUp, Clock, Award, HelpCircle } from 'lucide-react-native';
 
 const formatGradeLevel = (grade: number): string => {
   return grade === 0 ? 'K' : grade.toString();
@@ -104,6 +104,13 @@ export default function DashboardScreen() {
           resizeMode="contain"
         />
         <Text style={styles.headerSubtitle}>Track your children's reading progress</Text>
+        <TouchableOpacity
+          style={styles.howItWorksButton}
+          onPress={() => router.push('/how-it-works')}
+        >
+          <HelpCircle size={18} color="#2E7D32" />
+          <Text style={styles.howItWorksText}>How It Works</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -122,6 +129,13 @@ export default function DashboardScreen() {
               onPress={() => router.push('/children')}
             >
               <Text style={styles.emptyButtonText}>Add Child</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.emptySecondaryButton}
+              onPress={() => router.push('/how-it-works')}
+            >
+              <HelpCircle size={16} color="#2E7D32" />
+              <Text style={styles.emptySecondaryButtonText}>How It Works</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -211,6 +225,21 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     color: '#E8F5E9',
+    marginBottom: 16,
+  },
+  howItWorksButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    gap: 6,
+  },
+  howItWorksText: {
+    fontSize: 14,
+    color: '#2E7D32',
+    fontWeight: '600',
   },
   content: {
     flex: 1,
@@ -244,6 +273,20 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     color: '#FFF',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  emptySecondaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 12,
+    gap: 6,
+  },
+  emptySecondaryButtonText: {
+    color: '#2E7D32',
+    fontSize: 14,
     fontWeight: '600',
   },
   childrenList: {
