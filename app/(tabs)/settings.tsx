@@ -169,13 +169,28 @@ export default function SettingsScreen() {
         }
       );
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.text();
-        console.error('Delete account failed:', errorData);
-        throw new Error('Failed to delete account');
+        let errorMessage = 'Failed to delete account';
+        try {
+          const errorData = await response.json();
+          console.error('Delete account failed:', errorData);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+          if (errorData.details) {
+            errorMessage += `: ${errorData.details}`;
+          }
+        } catch (parseError) {
+          const errorText = await response.text();
+          console.error('Delete account failed (text):', errorText);
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
-      console.log('Account deleted successfully');
+      const result = await response.json();
+      console.log('Account deleted successfully:', result);
+
       await signOut();
       router.replace('/auth/login');
 
@@ -187,10 +202,11 @@ export default function SettingsScreen() {
     } catch (error: any) {
       console.error('Error deleting account:', error);
       setLoading(false);
+      const errorMessage = error.message || 'Unable to delete account. Please contact support.';
       if (Platform.OS === 'web') {
-        window.alert('Unable to delete account. Please contact support.');
+        window.alert(errorMessage);
       } else {
-        Alert.alert('Error', 'Unable to delete account. Please contact support.');
+        Alert.alert('Error', errorMessage);
       }
     }
   };
