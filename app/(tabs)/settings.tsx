@@ -299,9 +299,9 @@ export default function SettingsScreen() {
             style={styles.footerLogo}
             resizeMode="contain"
           />
-          <Text style={styles.footerText}>BookBucks v1.0.0</Text>
+          <Text style={styles.footerText}>Reading Riches v1.0.0</Text>
           <Text style={styles.footerSubtext}>
-            Making reading fun, one book at a time!
+            Read • Earn • Play
           </Text>
         </View>
       </ScrollView>

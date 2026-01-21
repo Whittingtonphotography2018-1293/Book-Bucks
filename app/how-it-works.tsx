@@ -57,7 +57,7 @@ export default function HowItWorksScreen() {
       title: 'Earn',
       subtitle: 'Each book adds up rewards',
       description: [
-        'Every approved book earns BookBucks (money or points).',
+        'Every approved book earns rewards (money or points).',
         'The more they read, the more they earn!',
       ],
       icon: <TrendingUp size={32} color="#F57C00" />,
@@ -72,7 +72,7 @@ export default function HowItWorksScreen() {
       description: [
         'When kids reach their goal, you decide when and how to give the reward.',
         'Give whatever you promised — money, prizes, treats, or special time together.',
-        'BookBucks simply tracks progress. You control everything else!',
+        'Reading Riches simply tracks progress. You control everything else!',
       ],
       icon: <PartyPopper size={32} color="#7B1FA2" />,
       color: '#7B1FA2',
@@ -93,7 +93,7 @@ export default function HowItWorksScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.heroSection}>
           <Text style={styles.heroEmoji}>✨</Text>
-          <Text style={styles.heroTitle}>How BookBucks Works</Text>
+          <Text style={styles.heroTitle}>How Reading Riches Works</Text>
           <Text style={styles.heroSubtitle}>
             A simple tracking tool to help parents reward reading. You control the prizes and values!
           </Text>
@@ -150,7 +150,7 @@ export default function HowItWorksScreen() {
         <View style={styles.footer}>
           <BookOpen size={40} color="#CCC" />
           <Text style={styles.footerText}>
-            BookBucks is a tracking tool that helps you reward reading your way. You're always in control!
+            Reading Riches is a tracking tool that helps you reward reading your way. You're always in control!
           </Text>
         </View>
       </ScrollView>
