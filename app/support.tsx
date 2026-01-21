@@ -5,11 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Linking,
-  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Mail, MessageCircle, BookOpen, HelpCircle, AlertCircle } from 'lucide-react-native';
+import { ArrowLeft, MessageCircle, BookOpen, HelpCircle, AlertCircle } from 'lucide-react-native';
 
 interface FAQItem {
   question: string;
@@ -54,21 +52,6 @@ export default function SupportScreen() {
     },
   ];
 
-  const handleEmailSupport = () => {
-    const email = 'support@readingriches.app';
-    const subject = 'Reading Riches Support Request';
-    const body = 'Please describe your issue or question:';
-
-    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-    Linking.openURL(mailtoUrl).catch((err) => {
-      console.error('Error opening email:', err);
-      if (Platform.OS === 'web') {
-        window.alert(`Please email us at: ${email}`);
-      }
-    });
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -84,27 +67,10 @@ export default function SupportScreen() {
           <View style={styles.heroIcon}>
             <HelpCircle size={48} color="#2E7D32" />
           </View>
-          <Text style={styles.heroTitle}>How can we help?</Text>
+          <Text style={styles.heroTitle}>Support & Help</Text>
           <Text style={styles.heroSubtitle}>
-            Find answers to common questions or get in touch with our support team.
+            Find answers to common questions about Reading Riches.
           </Text>
-        </View>
-
-        <View style={styles.contactSection}>
-          <Text style={styles.sectionTitle}>Contact Support</Text>
-
-          <TouchableOpacity style={styles.contactCard} onPress={handleEmailSupport}>
-            <View style={styles.contactIcon}>
-              <Mail size={24} color="#2E7D32" />
-            </View>
-            <View style={styles.contactInfo}>
-              <Text style={styles.contactTitle}>Email Support</Text>
-              <Text style={styles.contactSubtitle}>support@readingriches.app</Text>
-              <Text style={styles.contactDescription}>
-                We typically respond within 24 hours
-              </Text>
-            </View>
-          </TouchableOpacity>
         </View>
 
         <View style={styles.faqSection}>
@@ -193,55 +159,12 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     paddingHorizontal: 16,
   },
-  contactSection: {
-    padding: 16,
-    paddingTop: 8,
-  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#333',
     marginBottom: 16,
     paddingHorizontal: 4,
-  },
-  contactCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFF',
-    padding: 20,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  contactIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#E8F5E9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  contactInfo: {
-    flex: 1,
-  },
-  contactTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 4,
-  },
-  contactSubtitle: {
-    fontSize: 14,
-    color: '#2E7D32',
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  contactDescription: {
-    fontSize: 13,
-    color: '#666',
   },
   faqSection: {
     padding: 16,
