@@ -15,7 +15,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#2E7D32"
+        "backgroundColor": "#F5E6B3"
       },
       "package": "com.readingriches.app"
     },
