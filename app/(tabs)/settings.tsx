@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Profile, Book } from '@/types/database';
-import { User, LogOut, Bell, BookCheck, Gift, Trash2 } from 'lucide-react-native';
+import { User, LogOut, Bell, BookCheck, Gift, Trash2, HelpCircle } from 'lucide-react-native';
 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
@@ -219,6 +219,10 @@ export default function SettingsScreen() {
     router.push('/prizes');
   };
 
+  const handleSupport = () => {
+    router.push('/support');
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -267,6 +271,19 @@ export default function SettingsScreen() {
                 <Gift size={20} color="#FFA726" />
               </View>
               <Text style={styles.menuItemText}>Manage Prizes</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Help & Support</Text>
+
+          <TouchableOpacity style={styles.menuItem} onPress={handleSupport}>
+            <View style={styles.menuItemLeft}>
+              <View style={[styles.menuIcon, { backgroundColor: '#E3F2FD' }]}>
+                <HelpCircle size={20} color="#1976D2" />
+              </View>
+              <Text style={styles.menuItemText}>Support & FAQs</Text>
             </View>
           </TouchableOpacity>
         </View>
