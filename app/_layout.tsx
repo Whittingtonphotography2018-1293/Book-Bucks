@@ -3,6 +3,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 function RootLayoutNav() {
   const { user, loading } = useAuth();
@@ -35,9 +36,11 @@ export default function RootLayout() {
   useFrameworkReady();
 
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-      <StatusBar style="auto" />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <RootLayoutNav />
+        <StatusBar style="auto" />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

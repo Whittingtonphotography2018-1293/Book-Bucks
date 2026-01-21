@@ -2,9 +2,21 @@ import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
+function getEnvVar(key: string, fallbackKey?: string): string {
+  const envValue = process.env[key];
+  if (envValue) return envValue;
+
+  const constantsValue = Constants.expoConfig?.extra?.[fallbackKey || key];
+  if (constantsValue) return constantsValue;
+
+  console.error(`Missing environment variable: ${key}`);
+  throw new Error(`Missing required environment variable: ${key}. Please check your app configuration.`);
+}
+
+const supabaseUrl = getEnvVar('EXPO_PUBLIC_SUPABASE_URL', 'supabaseUrl');
+const supabaseAnonKey = getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY', 'supabaseAnonKey');
 
 const ExpoSecureStoreAdapter = {
   getItem: (key: string) => {
