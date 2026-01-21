@@ -26,7 +26,6 @@
     },
     "production": {
       "ios": {
-        "resourceClass": "m-medium",
         "buildConfiguration": "Release",
         "simulator": false
       },
