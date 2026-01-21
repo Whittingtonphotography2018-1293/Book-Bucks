@@ -10,12 +10,13 @@ import {
   Modal,
   Linking,
   Platform,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Book, Child, Achievement } from '@/types/database';
-import { ArrowLeft, Check, X, BookOpen, Award, MessageCircle } from 'lucide-react-native';
+import { ArrowLeft, Check, X, BookOpen, Award, MessageCircle, Lock } from 'lucide-react-native';
 
 interface BookWithChild extends Book {
   child?: Child;
@@ -37,6 +38,11 @@ export default function ReviewBooksScreen() {
   const [loading, setLoading] = useState(true);
   const [selectedBook, setSelectedBook] = useState<BookWithChild | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [password, setPassword] = useState('');
+  const [verifyingPassword, setVerifyingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [pendingBook, setPendingBook] = useState<BookWithChild | null>(null);
 
   useEffect(() => {
     fetchPendingBooks();
@@ -184,7 +190,47 @@ export default function ReviewBooksScreen() {
     setModalVisible(true);
   };
 
-  const checkWithChatGPT = async (book: BookWithChild) => {
+  const verifyPasswordAndOpenChatGPT = async () => {
+    if (!password.trim()) {
+      setPasswordError('Please enter your password');
+      return;
+    }
+
+    if (!user?.email) {
+      setPasswordError('User email not found');
+      return;
+    }
+
+    setVerifyingPassword(true);
+    setPasswordError('');
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: password.trim(),
+      });
+
+      if (error) {
+        setPasswordError('Incorrect password');
+        setVerifyingPassword(false);
+        return;
+      }
+
+      setPasswordModalVisible(false);
+      setPassword('');
+      setVerifyingPassword(false);
+
+      if (pendingBook) {
+        proceedWithChatGPT(pendingBook);
+        setPendingBook(null);
+      }
+    } catch (error: any) {
+      setPasswordError('An error occurred. Please try again.');
+      setVerifyingPassword(false);
+    }
+  };
+
+  const proceedWithChatGPT = (book: BookWithChild) => {
     const prompt = `Please evaluate if this book summary written by a child is sufficient and demonstrates they actually read the book:
 
 Book Title: "${book.title}"
@@ -226,6 +272,13 @@ Provide your assessment and recommendation.`;
         ]
       );
     }
+  };
+
+  const checkWithChatGPT = async (book: BookWithChild) => {
+    setPendingBook(book);
+    setPasswordModalVisible(true);
+    setPassword('');
+    setPasswordError('');
   };
 
   if (loading) {
@@ -395,6 +448,74 @@ Provide your assessment and recommendation.`;
             </ScrollView>
           </View>
         )}
+      </Modal>
+
+      <Modal
+        visible={passwordModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => {
+          setPasswordModalVisible(false);
+          setPassword('');
+          setPasswordError('');
+          setPendingBook(null);
+        }}
+      >
+        <View style={styles.passwordModalOverlay}>
+          <View style={styles.passwordModalContainer}>
+            <View style={styles.passwordModalHeader}>
+              <Lock size={32} color="#2E7D32" />
+              <Text style={styles.passwordModalTitle}>Parent Verification</Text>
+              <Text style={styles.passwordModalSubtitle}>
+                Enter your account password to access ChatGPT
+              </Text>
+            </View>
+
+            <View style={styles.passwordInputContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Enter your password"
+                secureTextEntry
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setPasswordError('');
+                }}
+                autoFocus
+                editable={!verifyingPassword}
+              />
+              {passwordError ? (
+                <Text style={styles.passwordErrorText}>{passwordError}</Text>
+              ) : null}
+            </View>
+
+            <View style={styles.passwordModalActions}>
+              <TouchableOpacity
+                style={[styles.passwordModalButton, styles.passwordCancelButton]}
+                onPress={() => {
+                  setPasswordModalVisible(false);
+                  setPassword('');
+                  setPasswordError('');
+                  setPendingBook(null);
+                }}
+                disabled={verifyingPassword}
+              >
+                <Text style={styles.passwordCancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.passwordModalButton, styles.passwordVerifyButton]}
+                onPress={verifyPasswordAndOpenChatGPT}
+                disabled={verifyingPassword}
+              >
+                {verifyingPassword ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <Text style={styles.passwordVerifyButtonText}>Verify</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -610,5 +731,83 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
     borderRadius: 12,
+  },
+  passwordModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  passwordModalContainer: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  passwordModalHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  passwordModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  passwordModalSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  passwordInputContainer: {
+    marginBottom: 24,
+  },
+  passwordInput: {
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#F5F9F5',
+  },
+  passwordErrorText: {
+    color: '#F44336',
+    fontSize: 12,
+    marginTop: 8,
+  },
+  passwordModalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  passwordModalButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  passwordCancelButton: {
+    backgroundColor: '#F5F5F5',
+  },
+  passwordCancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+  },
+  passwordVerifyButton: {
+    backgroundColor: '#2E7D32',
+  },
+  passwordVerifyButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFF',
   },
 });
