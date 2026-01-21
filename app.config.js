@@ -1,0 +1,67 @@
+export default ({ config }) => {
+  return {
+    ...config,
+    name: 'Reading Riches',
+    slug: 'reading-riches',
+    version: '1.0.0',
+    orientation: 'portrait',
+    icon: './assets/images/icon.png',
+    scheme: 'myapp',
+    userInterfaceStyle: 'automatic',
+    splash: {
+      image: './assets/images/icon.png',
+      resizeMode: 'contain',
+      backgroundColor: '#F5E6B3',
+    },
+    newArchEnabled: false,
+    ios: {
+      supportsTablet: true,
+      bundleIdentifier: 'com.readingriches.app',
+      infoPlist: {
+        NSCameraUsageDescription:
+          'Allow Reading Riches to access your camera to scan book barcodes.',
+      },
+    },
+    android: {
+      adaptiveIcon: {
+        foregroundImage: './assets/images/icon.png',
+        backgroundColor: '#F5E6B3',
+      },
+      package: 'com.readingriches.app',
+      permissions: ['android.permission.CAMERA'],
+    },
+    web: {
+      bundler: 'metro',
+      output: 'single',
+      favicon: './assets/images/favicon.png',
+    },
+    plugins: [
+      'expo-router',
+      'expo-font',
+      'expo-splash-screen',
+      'expo-web-browser',
+      'expo-secure-store',
+      [
+        'expo-camera',
+        {
+          cameraPermission:
+            'Allow Reading Riches to access your camera to scan book barcodes.',
+        },
+      ],
+    ],
+    experiments: {
+      typedRoutes: true,
+    },
+    extra: {
+      supabaseUrl:
+        process.env.EXPO_PUBLIC_SUPABASE_URL ||
+        'https://tzbiscpgabkpjxhgvlze.supabase.co',
+      supabaseAnonKey:
+        process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6YmlzY3BnYWJrcGp4aGd2bHplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NTE5NzAsImV4cCI6MjA4NDQyNzk3MH0.wTox-OGmVl2pB78vkncJnF2LlrvEmgiTo3KXmpVCfT0',
+      eas: {
+        projectId: process.env.EAS_PROJECT_ID,
+      },
+    },
+  };
+};

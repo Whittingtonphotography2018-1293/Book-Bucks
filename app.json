@@ -7,7 +7,12 @@
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5E6B3"
+    },
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.readingriches.app",
@@ -33,6 +38,7 @@
     "plugins": [
       "expo-router",
       "expo-font",
+      "expo-splash-screen",
       "expo-web-browser",
       "expo-secure-store",
       [
