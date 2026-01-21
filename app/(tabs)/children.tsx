@@ -9,6 +9,9 @@ import {
   Modal,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,6 +36,7 @@ export default function ChildrenScreen() {
   const { user } = useAuth();
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | null>(null);
 
@@ -103,8 +107,18 @@ export default function ChildrenScreen() {
   };
 
   const handleSave = async () => {
-    if (!name.trim() || !gradeLevel) {
-      Alert.alert('Error', 'Please fill in all fields');
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to add a child');
+      return;
+    }
+
+    if (!name.trim()) {
+      Alert.alert('Error', 'Please enter a name');
+      return;
+    }
+
+    if (!gradeLevel.trim()) {
+      Alert.alert('Error', 'Please enter a grade level');
       return;
     }
 
@@ -117,10 +131,18 @@ export default function ChildrenScreen() {
     const amount = parseFloat(amountPerBook);
     const threshold = parseFloat(payoutThreshold);
 
-    if (isNaN(amount) || amount < 0 || isNaN(threshold) || threshold < 0) {
-      Alert.alert('Error', 'Please enter valid amounts');
+    if (isNaN(amount) || amount < 0) {
+      Alert.alert('Error', 'Please enter a valid amount per book');
       return;
     }
+
+    if (isNaN(threshold) || threshold < 0) {
+      Alert.alert('Error', 'Please enter a valid payout threshold');
+      return;
+    }
+
+    setSaving(true);
+    Keyboard.dismiss();
 
     try {
       if (editingChild) {
@@ -134,7 +156,10 @@ export default function ChildrenScreen() {
           })
           .eq('id', editingChild.id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Update child error:', updateError);
+          throw new Error(updateError.message || 'Failed to update child');
+        }
 
         const { error: settingsError } = await supabase
           .from('reward_settings')
@@ -149,12 +174,15 @@ export default function ChildrenScreen() {
             { onConflict: 'child_id' }
           );
 
-        if (settingsError) throw settingsError;
+        if (settingsError) {
+          console.error('Update settings error:', settingsError);
+          throw new Error(settingsError.message || 'Failed to update reward settings');
+        }
       } else {
         const { data: newChild, error: insertError } = await supabase
           .from('children')
           .insert({
-            parent_id: user!.id,
+            parent_id: user.id,
             name: name.trim(),
             grade_level: grade,
             avatar_color: selectedColor,
@@ -162,7 +190,14 @@ export default function ChildrenScreen() {
           .select()
           .single();
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Insert child error:', insertError);
+          throw new Error(insertError.message || 'Failed to create child');
+        }
+
+        if (!newChild) {
+          throw new Error('No child data returned after insert');
+        }
 
         const { error: settingsError } = await supabase
           .from('reward_settings')
@@ -173,14 +208,22 @@ export default function ChildrenScreen() {
             payout_threshold: threshold,
           });
 
-        if (settingsError) throw settingsError;
+        if (settingsError) {
+          console.error('Insert settings error:', settingsError);
+          throw new Error(settingsError.message || 'Failed to create reward settings');
+        }
       }
 
       setModalVisible(false);
       await fetchChildren();
     } catch (error: any) {
-      console.error('Save error:', error);
-      Alert.alert('Error', error.message || 'Failed to save child');
+      console.error('Save error details:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to save child. Please try again.'
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -268,17 +311,24 @@ export default function ChildrenScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
+        <KeyboardAvoidingView
+          style={styles.modalContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>
               {editingChild ? 'Edit Child' : 'Add Child'}
             </Text>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
+            <TouchableOpacity onPress={() => setModalVisible(false)} disabled={saving}>
               <X size={24} color="#333" />
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.modalContent}>
+          <ScrollView
+            style={styles.modalContent}
+            keyboardShouldPersistTaps="handled"
+          >
             <Text style={styles.label}>Name</Text>
             <TextInput
               style={styles.input}
@@ -380,13 +430,21 @@ export default function ChildrenScreen() {
               keyboardType="decimal-pad"
             />
 
-            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-              <Text style={styles.saveButtonText}>
-                {editingChild ? 'Update' : 'Add Child'}
-              </Text>
+            <TouchableOpacity
+              style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+              onPress={handleSave}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.saveButtonText}>
+                  {editingChild ? 'Update' : 'Add Child'}
+                </Text>
+              )}
             </TouchableOpacity>
           </ScrollView>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -574,6 +632,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 32,
     marginBottom: 32,
+  },
+  saveButtonDisabled: {
+    backgroundColor: '#FFCC80',
+    opacity: 0.7,
   },
   saveButtonText: {
     color: '#FFF',
