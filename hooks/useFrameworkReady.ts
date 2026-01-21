@@ -8,14 +8,26 @@ declare global {
   }
 }
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch((error) => {
+  console.warn('Failed to prevent auto hide splash screen:', error);
+});
 
 export function useFrameworkReady() {
   useEffect(() => {
-    if (Platform.OS === 'web') {
-      window.frameworkReady?.();
-    }
+    const hideSplash = async () => {
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-    SplashScreen.hideAsync();
+        if (Platform.OS === 'web') {
+          window.frameworkReady?.();
+        }
+
+        await SplashScreen.hideAsync();
+      } catch (error) {
+        console.error('Error hiding splash screen:', error);
+      }
+    };
+
+    hideSplash();
   }, []);
 }

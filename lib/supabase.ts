@@ -5,28 +5,46 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 function getEnvVar(key: string, fallbackKey?: string): string {
-  const envValue = process.env[key];
-  if (envValue) return envValue;
+  try {
+    const envValue = process.env[key];
+    if (envValue) return envValue;
 
-  const constantsValue = Constants.expoConfig?.extra?.[fallbackKey || key];
-  if (constantsValue) return constantsValue;
+    const constantsValue = Constants.expoConfig?.extra?.[fallbackKey || key];
+    if (constantsValue) return constantsValue;
 
-  console.error(`Missing environment variable: ${key}`);
-  throw new Error(`Missing required environment variable: ${key}. Please check your app configuration.`);
+    console.error(`Missing environment variable: ${key}`);
+    throw new Error(`Missing required environment variable: ${key}. Please check your app configuration.`);
+  } catch (error) {
+    console.error('Error getting environment variable:', error);
+    throw error;
+  }
 }
 
 const supabaseUrl = getEnvVar('EXPO_PUBLIC_SUPABASE_URL', 'supabaseUrl');
 const supabaseAnonKey = getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY', 'supabaseAnonKey');
 
 const ExpoSecureStoreAdapter = {
-  getItem: (key: string) => {
-    return SecureStore.getItemAsync(key);
+  getItem: async (key: string) => {
+    try {
+      return await SecureStore.getItemAsync(key);
+    } catch (error) {
+      console.error('SecureStore getItem error:', error);
+      return null;
+    }
   },
-  setItem: (key: string, value: string) => {
-    SecureStore.setItemAsync(key, value);
+  setItem: async (key: string, value: string) => {
+    try {
+      await SecureStore.setItemAsync(key, value);
+    } catch (error) {
+      console.error('SecureStore setItem error:', error);
+    }
   },
-  removeItem: (key: string) => {
-    SecureStore.deleteItemAsync(key);
+  removeItem: async (key: string) => {
+    try {
+      await SecureStore.deleteItemAsync(key);
+    } catch (error) {
+      console.error('SecureStore removeItem error:', error);
+    }
   },
 };
 

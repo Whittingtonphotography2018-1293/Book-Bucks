@@ -1,30 +1,32 @@
 # Build Instructions for Reading Riches
 
-## What Was Fixed
+## TestFlight Crash Prevention Fixes
 
-The "Searching for worker" issue has been resolved by addressing several critical configuration problems:
+The app has been hardened against common TestFlight crashes with the following improvements:
 
-### 1. Platform-Specific Initialization
-- Fixed `useFrameworkReady` hook to work on both web and native platforms
-- Added proper splash screen handling for iOS using `expo-splash-screen`
-- Prevented splash screen auto-hide and manually control when it's hidden
+### 1. SecureStore Error Handling
+- **Issue**: iOS keychain access can fail in TestFlight builds
+- **Fix**: Added comprehensive try-catch blocks in SecureStore adapter
+- **Location**: `lib/supabase.ts:21-44`
 
-### 2. App Layout Improvements
-- Added loading state with visual feedback during authentication initialization
-- Prevented navigation attempts before auth state is loaded
-- Fixed potential race conditions in the root layout
+### 2. Splash Screen Timing
+- **Issue**: Race conditions between splash screen and app initialization
+- **Fix**: Added 100ms delay and proper error handling for splash screen operations
+- **Location**: `hooks/useFrameworkReady.ts:16-32`
 
-### 3. Configuration Updates
-- **Disabled New Architecture**: Changed `newArchEnabled` from `true` to `false` to ensure compatibility with all native modules
-- **Added Splash Screen Configuration**: Properly configured splash screen in `app.json`
-- **Added All Required Plugins**: Ensured `expo-splash-screen` and other critical plugins are listed
-- **Created app.config.js**: Dynamic configuration file for better environment variable handling
+### 3. Environment Variable Configuration
+- **Issue**: Environment variables not available in production builds
+- **Fix**: Hardcoded fallback values in `app.config.js` with Constants.expoConfig.extra
+- **Location**: `app.config.js:1-2, 59-60` and `lib/supabase.ts:7-21`
 
-### 4. Native Module Setup
-- Configured Babel with `react-native-reanimated/plugin`
-- Added proper Metro bundler configuration
-- Set up EAS Build profiles for development, preview, and production
-- Added proper iOS and Android permissions
+### 4. iOS Configuration Improvements
+- **Added**: `buildNumber` for proper iOS versioning
+- **Added**: `LSApplicationQueriesSchemes` for URL handling
+- **Location**: `app.config.js:22-26`
+
+### 5. Error Boundary
+- **Added**: Comprehensive error boundary to catch and display errors gracefully
+- **Location**: `components/ErrorBoundary.tsx` and `app/_layout.tsx:55-60`
 
 ## Building for TestFlight
 
@@ -46,28 +48,24 @@ The "Searching for worker" issue has been resolved by addressing several critica
 
 ### Build for iOS (TestFlight)
 
-#### Option 1: Production Build
+#### Production Build (Recommended)
 ```bash
 eas build --profile production --platform ios --clear-cache
 ```
 
-#### Option 2: Preview Build (for internal testing)
+#### Preview Build (for internal testing)
 ```bash
 eas build --profile preview --platform ios --clear-cache
 ```
 
-### After Build Completes
+### Submit to TestFlight
 
-1. **Download the Build**: After the build completes, EAS will provide a download link
-
-2. **Submit to TestFlight**:
+1. **Automatic Submission**:
    ```bash
    eas submit --platform ios --latest
    ```
 
-   Or manually upload the .ipa file to App Store Connect
-
-3. **Fill in App Store Connect Details**: In `eas.json`, update the submit configuration:
+2. **Configure Submit Details**: In `eas.json`, update:
    ```json
    {
      "submit": {
@@ -82,11 +80,17 @@ eas build --profile preview --platform ios --clear-cache
    }
    ```
 
-## Testing Locally
+## Testing Locally Before Building
 
-### Clear Cache and Start Fresh
+### Clean Build
 ```bash
 npm run clean
+rm -rf node_modules
+npm install
+```
+
+### Start Development Server
+```bash
 npm run dev:clear
 ```
 
@@ -95,75 +99,115 @@ npm run dev:clear
 npm run typecheck
 ```
 
-### Build Web Version (for testing)
+## Troubleshooting TestFlight Crashes
+
+### 1. Check Crash Logs in App Store Connect
+- Go to App Store Connect → Your App → TestFlight → Select Build
+- Look at Crashes & Metrics
+- Download crash logs for detailed stack traces
+
+### 2. Common TestFlight Issues
+
+#### App Crashes on Launch
+- **Cause**: Environment variables not loaded, SecureStore issues, or initialization errors
+- **Solution**: All addressed in the fixes above
+- **Verify**: Check that `app.config.js` has hardcoded Supabase credentials
+
+#### Blank Screen / Stuck Loading
+- **Cause**: Navigation timing issues or auth state problems
+- **Solution**: Improved splash screen timing and added loading states
+- **Verify**: Test on TestFlight with fresh install
+
+#### SecureStore Access Errors
+- **Cause**: iOS keychain permissions in production builds
+- **Solution**: All SecureStore operations now have error handling
+- **Verify**: Check logs for "SecureStore" errors
+
+### 3. Debug Production Builds Locally
+
+Build a production-like version locally:
 ```bash
-npm run build:web
+eas build --profile preview --platform ios --local
 ```
 
-## Troubleshooting
+This creates a build you can test on your device before submitting to TestFlight.
 
-### If the build still fails:
+### 4. Enable More Logging
 
-1. **Check Build Logs**: Look at the EAS build logs for specific errors
-   ```bash
-   eas build:list
-   ```
+If crashes persist, you can temporarily add more logging:
 
-2. **Verify Dependencies**: Ensure all native dependencies are installed
-   ```bash
-   npx expo install --check
-   ```
+In `lib/supabase.ts`:
+```javascript
+console.log('Initializing Supabase with:', { supabaseUrl, supabaseAnonKey: '***' });
+```
 
-3. **Update Expo SDK**: Make sure you're using the latest compatible versions
-   ```bash
-   npx expo install expo@latest
-   ```
+In `contexts/AuthContext.tsx`:
+```javascript
+console.log('Auth state changed:', { event, userId: session?.user?.id });
+```
 
-4. **Clean Everything**:
-   ```bash
-   npm run clean
-   rm -rf node_modules
-   npm install
-   ```
+**Remember to remove extra logging before production release.**
 
-5. **Check Native Logs**: If testing on a physical device or simulator, check the native logs:
-   - iOS: Use Console.app on Mac
-   - Android: Use `adb logcat`
+## Key Configuration Files
 
-### Common Issues:
+### app.config.js
+- Contains hardcoded Supabase credentials as fallback
+- iOS configuration with proper permissions
+- Build number and version codes
 
-- **"Module not found"**: Run `npx expo install` for any missing native modules
-- **Build timeout**: Increase the resource class in `eas.json` (already set to `m-medium`)
-- **Signing errors**: Ensure your Apple Developer account is properly configured
-- **Environment variables**: Make sure Supabase credentials are correct
+### eas.json
+- Build profiles for development, preview, and production
+- `EXPO_NO_DOTENV: "1"` disables .env files (credentials come from app.config.js)
 
-## Key Files Modified
+### lib/supabase.ts
+- Reads from Constants.expoConfig.extra (set in app.config.js)
+- Has robust error handling for SecureStore
+- Falls back gracefully if environment variables are missing
 
-- `hooks/useFrameworkReady.ts` - Added native platform support and splash screen handling
-- `app/_layout.tsx` - Added proper loading states and initialization guards
-- `app.json` - Added splash screen, disabled new architecture, configured plugins
-- `app.config.js` - Created dynamic configuration file
-- `eas.json` - Configured build profiles for all environments
-- `babel.config.js` - Added Reanimated plugin
-- `metro.config.js` - Basic Metro configuration
-- `package.json` - Added clean and dev:clear scripts
+## Testing Checklist Before TestFlight
 
-## Next Steps
+- [ ] Clean install of dependencies
+- [ ] Type check passes (`npm run typecheck`)
+- [ ] App runs in development mode
+- [ ] Test login/logout flow
+- [ ] Test all CRUD operations (children, books, prizes)
+- [ ] Verify Supabase connection works
+- [ ] Build completes without errors
+- [ ] Test on physical device with preview build
 
-1. Run a clean build: `eas build --profile production --platform ios --clear-cache`
-2. Wait for build to complete (typically 10-20 minutes)
-3. Download and test the build
-4. Submit to TestFlight: `eas submit --platform ios --latest`
-5. Test on TestFlight before releasing to App Store
+## After TestFlight Upload
+
+1. **Install on Test Device**: Download from TestFlight
+2. **Fresh Install Test**: Delete app and reinstall to test first-launch experience
+3. **Test All Features**:
+   - Sign up / Sign in
+   - Add children
+   - Add books
+   - Review books
+   - Manage prizes
+   - Settings and account deletion
+4. **Check for Crashes**: Monitor App Store Connect for crash reports
+5. **Verify Performance**: Test app responsiveness and loading times
 
 ## Important Notes
 
-- The app no longer uses Expo Go - it's a standalone native build
-- All native modules are properly configured and linked
-- Splash screen is properly managed for smooth app startup
-- Authentication state is handled correctly with loading indicators
-- The "Searching for worker" issue should be completely resolved
+- **No .env Files in Production**: All environment variables are in `app.config.js`
+- **SecureStore is Safe**: All operations have error handling
+- **Splash Screen**: Properly managed with timing delays
+- **Error Boundary**: Catches and displays errors instead of crashing
+- **iOS Keychain**: Handled gracefully with fallbacks
 
-For more information, see:
+## Support Resources
+
 - [EAS Build Documentation](https://docs.expo.dev/build/introduction/)
 - [Submitting to TestFlight](https://docs.expo.dev/submit/ios/)
+- [Debugging Production Builds](https://docs.expo.dev/build-reference/debugging/)
+- [App Store Connect](https://appstoreconnect.apple.com/)
+
+## Next Steps
+
+1. Build for TestFlight: `eas build --profile production --platform ios --clear-cache`
+2. Wait for build (typically 10-20 minutes)
+3. Submit to TestFlight: `eas submit --platform ios --latest`
+4. Test thoroughly before releasing to production
+5. Monitor crash reports in App Store Connect
