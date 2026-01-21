@@ -25,17 +25,29 @@ export default function SignUpScreen() {
 
   const handleSignUp = async () => {
     if (!fullName || !email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      if (Platform.OS === 'web') {
+        window.alert('Please fill in all fields');
+      } else {
+        Alert.alert('Error', 'Please fill in all fields');
+      }
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      if (Platform.OS === 'web') {
+        window.alert('Passwords do not match');
+      } else {
+        Alert.alert('Error', 'Passwords do not match');
+      }
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      if (Platform.OS === 'web') {
+        window.alert('Password must be at least 6 characters');
+      } else {
+        Alert.alert('Error', 'Password must be at least 6 characters');
+      }
       return;
     }
 
@@ -44,14 +56,23 @@ export default function SignUpScreen() {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Error', error.message);
+      if (Platform.OS === 'web') {
+        window.alert(error.message);
+      } else {
+        Alert.alert('Error', error.message);
+      }
     } else {
-      Alert.alert('Success', 'Account created successfully!', [
-        {
-          text: 'OK',
-          onPress: () => router.replace('/(tabs)'),
-        },
-      ]);
+      if (Platform.OS === 'web') {
+        window.alert('Account created successfully!');
+        router.replace('/(tabs)');
+      } else {
+        Alert.alert('Success', 'Account created successfully!', [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/(tabs)'),
+          },
+        ]);
+      }
     }
   };
 

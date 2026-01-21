@@ -132,10 +132,19 @@ export default function ReviewBooksScreen() {
 
       await checkAndAwardAchievements(book.child_id);
 
-      Alert.alert('Success', `"${book.title}" has been approved!`);
+      if (Platform.OS === 'web') {
+        window.alert(`"${book.title}" has been approved!`);
+      } else {
+        Alert.alert('Success', `"${book.title}" has been approved!`);
+      }
+
       fetchPendingBooks();
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      if (Platform.OS === 'web') {
+        window.alert(`Error: ${error.message}`);
+      } else {
+        Alert.alert('Error', error.message);
+      }
     }
   };
 

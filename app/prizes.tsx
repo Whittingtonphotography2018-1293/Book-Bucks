@@ -9,6 +9,7 @@ import {
   Modal,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -90,13 +91,21 @@ export default function PrizesScreen() {
 
   const handleSave = async () => {
     if (!prizeName.trim()) {
-      Alert.alert('Error', 'Please enter a prize name');
+      if (Platform.OS === 'web') {
+        window.alert('Please enter a prize name');
+      } else {
+        Alert.alert('Error', 'Please enter a prize name');
+      }
       return;
     }
 
     const points = parseFloat(pointsRequired);
     if (isNaN(points) || points < 0) {
-      Alert.alert('Error', 'Please enter a valid points value');
+      if (Platform.OS === 'web') {
+        window.alert('Please enter a valid points value');
+      } else {
+        Alert.alert('Error', 'Please enter a valid points value');
+      }
       return;
     }
 
@@ -128,28 +137,44 @@ export default function PrizesScreen() {
       setModalVisible(false);
       fetchData();
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      if (Platform.OS === 'web') {
+        window.alert(error.message);
+      } else {
+        Alert.alert('Error', error.message);
+      }
     }
   };
 
   const handleDelete = (prize: Prize) => {
-    Alert.alert('Delete Prize', `Are you sure you want to delete "${prize.name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const { error } = await supabase.from('prizes').delete().eq('id', prize.id);
-
-            if (error) throw error;
-            fetchData();
-          } catch (error: any) {
-            Alert.alert('Error', error.message);
-          }
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Are you sure you want to delete "${prize.name}"?`)) {
+        performDelete(prize);
+      }
+    } else {
+      Alert.alert('Delete Prize', `Are you sure you want to delete "${prize.name}"?`, [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => performDelete(prize),
         },
-      },
-    ]);
+      ]);
+    }
+  };
+
+  const performDelete = async (prize: Prize) => {
+    try {
+      const { error } = await supabase.from('prizes').delete().eq('id', prize.id);
+
+      if (error) throw error;
+      fetchData();
+    } catch (error: any) {
+      if (Platform.OS === 'web') {
+        window.alert(`Error: ${error.message}`);
+      } else {
+        Alert.alert('Error', error.message);
+      }
+    }
   };
 
   const handleToggleRedeemed = async (prize: Prize) => {
@@ -162,7 +187,11 @@ export default function PrizesScreen() {
       if (error) throw error;
       fetchData();
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      if (Platform.OS === 'web') {
+        window.alert(`Error: ${error.message}`);
+      } else {
+        Alert.alert('Error', error.message);
+      }
     }
   };
 

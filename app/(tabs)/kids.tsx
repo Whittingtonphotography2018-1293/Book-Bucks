@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
   Animated,
+  Platform,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -99,15 +100,23 @@ export default function KidsScreen() {
     }
   };
 
+  const showAlert = (title: string, message: string) => {
+    if (Platform.OS === 'web') {
+      window.alert(message);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
   const handleAddBook = async () => {
     if (!bookTitle.trim() || !bookAuthor.trim() || !bookSummary.trim()) {
-      Alert.alert('Error', 'Please fill in all fields');
+      showAlert('Error', 'Please fill in all fields');
       return;
     }
 
     if (!selectedChild) {
       console.error('No child selected');
-      Alert.alert('Error', 'Please select a child');
+      showAlert('Error', 'Please select a child');
       return;
     }
 
@@ -153,10 +162,10 @@ export default function KidsScreen() {
       const levelInfo = bookInfo.readingLevel
         ? `\n\nReading Level: ${bookInfo.readingLevel}`
         : '';
-      Alert.alert('Success!', `Your book has been submitted for approval!${levelInfo}`);
+      showAlert('Success!', `Your book has been submitted for approval!${levelInfo}`);
     } catch (error: any) {
       console.error('handleAddBook error:', error);
-      Alert.alert('Error', error.message || 'Failed to submit book');
+      showAlert('Error', error.message || 'Failed to submit book');
     } finally {
       setSubmitting(false);
     }

@@ -106,25 +106,33 @@ export default function ChildrenScreen() {
     setModalVisible(true);
   };
 
+  const showAlert = (message: string) => {
+    if (Platform.OS === 'web') {
+      window.alert(message);
+    } else {
+      Alert.alert('Error', message);
+    }
+  };
+
   const handleSave = async () => {
     if (!user) {
-      Alert.alert('Error', 'You must be logged in to add a child');
+      showAlert('You must be logged in to add a child');
       return;
     }
 
     if (!name.trim()) {
-      Alert.alert('Error', 'Please enter a name');
+      showAlert('Please enter a name');
       return;
     }
 
     if (!gradeLevel.trim()) {
-      Alert.alert('Error', 'Please enter a grade level');
+      showAlert('Please enter a grade level');
       return;
     }
 
     const grade = parseGradeLevel(gradeLevel);
     if (grade === null || grade < 0 || grade > 12) {
-      Alert.alert('Error', 'Grade level must be between K and 12');
+      showAlert('Grade level must be between K and 12');
       return;
     }
 
@@ -132,12 +140,12 @@ export default function ChildrenScreen() {
     const threshold = parseFloat(payoutThreshold);
 
     if (isNaN(amount) || amount < 0) {
-      Alert.alert('Error', 'Please enter a valid amount per book');
+      showAlert('Please enter a valid amount per book');
       return;
     }
 
     if (isNaN(threshold) || threshold < 0) {
-      Alert.alert('Error', 'Please enter a valid payout threshold');
+      showAlert('Please enter a valid payout threshold');
       return;
     }
 
@@ -218,45 +226,45 @@ export default function ChildrenScreen() {
       await fetchChildren();
     } catch (error: any) {
       console.error('Save error details:', error);
-      Alert.alert(
-        'Error',
-        error.message || 'Failed to save child. Please try again.'
-      );
+      showAlert(error.message || 'Failed to save child. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = (child: Child) => {
-    Alert.alert(
-      'Delete Child',
-      `Are you sure you want to delete ${child.name}? This will remove all their books and progress.`,
-      [
+    const message = `Are you sure you want to delete ${child.name}? This will remove all their books and progress.`;
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(message)) {
+        performDelete(child);
+      }
+    } else {
+      Alert.alert('Delete Child', message, [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              const { error } = await supabase
-                .from('children')
-                .delete()
-                .eq('id', child.id);
-
-              if (error) {
-                console.error('Delete error:', error);
-                throw error;
-              }
-
-              await fetchChildren();
-            } catch (error: any) {
-              console.error('Delete error details:', error);
-              Alert.alert('Error', error.message || 'Failed to delete child');
-            }
-          },
+          onPress: () => performDelete(child),
         },
-      ]
-    );
+      ]);
+    }
+  };
+
+  const performDelete = async (child: Child) => {
+    try {
+      const { error } = await supabase.from('children').delete().eq('id', child.id);
+
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
+
+      await fetchChildren();
+    } catch (error: any) {
+      console.error('Delete error details:', error);
+      showAlert(error.message || 'Failed to delete child');
+    }
   };
 
   if (loading) {

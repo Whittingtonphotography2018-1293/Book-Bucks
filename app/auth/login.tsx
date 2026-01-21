@@ -23,7 +23,11 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      if (Platform.OS === 'web') {
+        window.alert('Please fill in all fields');
+      } else {
+        Alert.alert('Error', 'Please fill in all fields');
+      }
       return;
     }
 
@@ -32,7 +36,11 @@ export default function LoginScreen() {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Error', error.message);
+      if (Platform.OS === 'web') {
+        window.alert(error.message);
+      } else {
+        Alert.alert('Error', error.message);
+      }
     } else {
       router.replace('/(tabs)');
     }
