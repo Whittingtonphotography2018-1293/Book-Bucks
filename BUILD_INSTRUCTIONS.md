@@ -7,26 +7,32 @@ The app has been hardened against common TestFlight crashes with the following i
 ### 1. SecureStore Error Handling
 - **Issue**: iOS keychain access can fail in TestFlight builds
 - **Fix**: Added comprehensive try-catch blocks in SecureStore adapter
-- **Location**: `lib/supabase.ts:21-44`
+- **Location**: `lib/supabase.ts:26-49`
 
 ### 2. Splash Screen Timing
 - **Issue**: Race conditions between splash screen and app initialization
 - **Fix**: Added 100ms delay and proper error handling for splash screen operations
-- **Location**: `hooks/useFrameworkReady.ts:16-32`
+- **Location**: `hooks/useFrameworkReady.ts:15-32`
 
 ### 3. Environment Variable Configuration
 - **Issue**: Environment variables not available in production builds
-- **Fix**: Hardcoded fallback values in `app.config.js` with Constants.expoConfig.extra
-- **Location**: `app.config.js:1-2, 59-60` and `lib/supabase.ts:7-21`
+- **Fix**: Hardcoded values in `app.json` extra field, accessed via Constants.expoConfig.extra
+- **Location**: `app.json:57-60` and `lib/supabase.ts:7-24`
 
 ### 4. iOS Configuration Improvements
 - **Added**: `buildNumber` for proper iOS versioning
 - **Added**: `LSApplicationQueriesSchemes` for URL handling
-- **Location**: `app.config.js:22-26`
+- **Added**: `versionCode` for Android
+- **Location**: `app.json:19-23`
 
 ### 5. Error Boundary
 - **Added**: Comprehensive error boundary to catch and display errors gracefully
 - **Location**: `components/ErrorBoundary.tsx` and `app/_layout.tsx:55-60`
+
+### 6. Static Configuration
+- **Changed**: Converted `app.config.js` to `app.json` for EAS Build compatibility
+- **Reason**: EAS Build needs to write to config automatically, which requires a static JSON file
+- **Location**: `app.json`
 
 ## Building for TestFlight
 
@@ -111,7 +117,7 @@ npm run typecheck
 #### App Crashes on Launch
 - **Cause**: Environment variables not loaded, SecureStore issues, or initialization errors
 - **Solution**: All addressed in the fixes above
-- **Verify**: Check that `app.config.js` has hardcoded Supabase credentials
+- **Verify**: Check that `app.json` has Supabase credentials in the `extra` field
 
 #### Blank Screen / Stuck Loading
 - **Cause**: Navigation timing issues or auth state problems
@@ -122,6 +128,11 @@ npm run typecheck
 - **Cause**: iOS keychain permissions in production builds
 - **Solution**: All SecureStore operations now have error handling
 - **Verify**: Check logs for "SecureStore" errors
+
+#### EAS Build Cannot Write to Config
+- **Cause**: Using `app.config.js` (dynamic) instead of `app.json` (static)
+- **Solution**: Converted to `app.json` so EAS can automatically configure it
+- **Verify**: Ensure only `app.json` exists, not `app.config.js`
 
 ### 3. Debug Production Builds Locally
 
@@ -150,17 +161,19 @@ console.log('Auth state changed:', { event, userId: session?.user?.id });
 
 ## Key Configuration Files
 
-### app.config.js
-- Contains hardcoded Supabase credentials as fallback
-- iOS configuration with proper permissions
+### app.json
+- Static configuration file (required for EAS Build)
+- Contains all app configuration including Supabase credentials
+- iOS/Android settings with proper permissions
 - Build number and version codes
+- Located in `extra` field for runtime access via Constants.expoConfig.extra
 
 ### eas.json
 - Build profiles for development, preview, and production
-- `EXPO_NO_DOTENV: "1"` disables .env files (credentials come from app.config.js)
+- `EXPO_NO_DOTENV: "1"` disables .env files (credentials come from app.json)
 
 ### lib/supabase.ts
-- Reads from Constants.expoConfig.extra (set in app.config.js)
+- Reads from Constants.expoConfig.extra (set in app.json)
 - Has robust error handling for SecureStore
 - Falls back gracefully if environment variables are missing
 
@@ -191,7 +204,8 @@ console.log('Auth state changed:', { event, userId: session?.user?.id });
 
 ## Important Notes
 
-- **No .env Files in Production**: All environment variables are in `app.config.js`
+- **Use app.json, NOT app.config.js**: EAS Build requires a static JSON file to automatically configure
+- **No .env Files in Production**: All environment variables are in `app.json`
 - **SecureStore is Safe**: All operations have error handling
 - **Splash Screen**: Properly managed with timing delays
 - **Error Boundary**: Catches and displays errors instead of crashing
