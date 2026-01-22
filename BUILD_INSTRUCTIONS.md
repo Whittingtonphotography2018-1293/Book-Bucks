@@ -34,6 +34,14 @@ The app has been hardened against common TestFlight crashes with the following i
 - **Reason**: EAS Build needs to write to config automatically, which requires a static JSON file
 - **Location**: `app.json`
 
+### 7. New Architecture Enabled
+- **Issue**: React Native Reanimated requires the New Architecture to be enabled
+- **Fix**:
+  - Set `newArchEnabled: true` in `app.json`
+  - Added `RCT_NEW_ARCH_ENABLED: "1"` environment variable to all EAS build profiles
+- **Location**: `app.json:15` and `eas.json:15,26,39`
+- **Why**: The latest version of react-native-reanimated requires New Architecture to function properly
+
 ## Building for TestFlight
 
 ### Prerequisites

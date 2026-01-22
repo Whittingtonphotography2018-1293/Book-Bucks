@@ -12,7 +12,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#F5E6B3"
     },
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.readingriches.app",

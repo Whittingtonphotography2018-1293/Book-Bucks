@@ -11,7 +11,8 @@
         "buildConfiguration": "Debug"
       },
       "env": {
-        "EXPO_NO_DOTENV": "1"
+        "EXPO_NO_DOTENV": "1",
+        "RCT_NEW_ARCH_ENABLED": "1"
       }
     },
     "preview": {
@@ -21,7 +22,8 @@
         "buildConfiguration": "Release"
       },
       "env": {
-        "EXPO_NO_DOTENV": "1"
+        "EXPO_NO_DOTENV": "1",
+        "RCT_NEW_ARCH_ENABLED": "1"
       }
     },
     "production": {
@@ -33,7 +35,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_NO_DOTENV": "1"
+        "EXPO_NO_DOTENV": "1",
+        "RCT_NEW_ARCH_ENABLED": "1"
       }
     }
   },
